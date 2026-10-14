@@ -546,9 +546,9 @@ Ajouter un troisième mode de comportement dans le menu de sélection de la cibl
 - **Suivre une cible autonome** (comportement existant) ;
 - **La cible fuit les vaisseaux** (nouveau comportement).
 
-Le troisième mode réutilise l’unique instance persistante de `Target`. La cible est
-normalement autonome ; lorsqu’un vaisseau devient une menace, elle passe dans un état
-de fuite temporaire.
+Le troisième mode réutilise l’unique instance persistante de `TargetFuyante`, sous-
+classe de `Target` définie dans `targetFuyante.js`. La cible est normalement autonome ;
+lorsqu’un vaisseau devient une menace, elle passe dans un état de fuite temporaire.
 
 ### Détection et sélection de la menace
 
@@ -570,8 +570,8 @@ Le comportement est une petite machine à états : `normal`, `fleeing` et
 
 - En état `normal`, la cible conserve son comportement autonome habituel.
 - Lorsqu’une menace entre dans le rayon, la cible démarre une fuite en utilisant le
-  comportement `flee()` hérité de `Vehicle`. La force appliquée doit l’éloigner du
-  véhicule sélectionné.
+  comportement `flee()` de `TargetFuyante`, spécialisation du steering behavior de
+  `Vehicle`. La force appliquée doit l’éloigner du véhicule sélectionné.
 - Ajouter un curseur **Distance de sortie** (par défaut `300` px, plage proposée
   `100`–`800` px, pas `10`). La fuite continue tant que la menace la plus proche reste
   à l’intérieur de cette distance. Pour éviter les basculements rapides, la valeur
@@ -606,12 +606,26 @@ Le comportement est une petite machine à états : `normal`, `fleeing` et
 
 ### Interface utilisateur
 
+- Dans le mode **La cible fuit les vaisseaux**, ajouter un curseur **Cibles fuyantes**
+  (de `1` à `20`, valeur initiale `3`). Le curseur est masqué dans les modes souris
+  et cible autonome et sa valeur est appliquée à chaque événement `input`.
+- Ajouter un curseur **Temps avant duplication** (en secondes), par défaut `4.0`, avec
+  une plage proposée de `1` à `10`. Chaque cible qui atteint cette durée de survie
+  démarre une animation de scission de `0.7` seconde, puis donne naissance à deux
+  cibles ; chacune recommence son propre chronomètre à zéro.
+- Chaque instance créée est une `TargetFuyante` indépendante. Les véhicules suivent
+  la cible fuyante la plus proche et chaque cible conserve son propre état de fuite,
+  son endurance et son cooldown.
 - Les trois curseurs doivent être mis à jour avec l’événement `input` afin que leur
   valeur numérique et le comportement changent en temps réel pendant le déplacement.
 - Afficher les unités (`px` ou `s`) et les valeurs courantes à côté des curseurs.
 - Le menu de mode applique le changement immédiatement avec l’événement `change`.
 - Les contrôles restent intégrés au panneau existant, masqué par défaut par le bouton
   **UI on/off**.
+- Ajouter un mode debug basculable avec la touche `d` ou la case **Mode debug** de
+  l’interface. Lorsqu’il est actif, afficher le rayon de détection de la cible en mode
+  fuite et les vecteurs rouges de vitesse des véhicules. Ces aides sont masquées dans
+  tous les autres cas.
 
 ### Workflow
 
@@ -639,16 +653,20 @@ flowchart TD
 
 ### Organisation proposée
 
-`sketch.js` reste l’orchestrateur de la boucle et de l’interface. La logique de la
-machine à états peut être isolée dans un nouveau fichier tel que `target-flee.js`
-(détection, sélection de la menace, chronomètre, endurance et transitions). Cette
-solution évite de modifier `target.js` ou les exemples protégés de `vehicle.js` et
-permet de tester les fonctions de calcul indépendamment du rendu p5.js.
+`sketch.js` reste l’orchestrateur de la boucle et de l’interface. La cible mobile est
+implémentée dans `targetFuyante.js` par la sous-classe `TargetFuyante extends Target`.
+Elle porte la détection, la sélection de la menace, le steering `flee()`, le
+chronomètre, l’endurance et les transitions. `target-utils.js` contient uniquement
+les fonctions de scène pour le menu, les rayons de contact et les réapparitions. Cette
+séparation évite de modifier `target.js` ou les exemples protégés de `vehicle.js` et
+permet de tester la sous-classe sans transformer `sketch.js` en contrôleur de
+locomotion.
 
 ### Critères d’acceptation
 
-1. Le menu propose exactement les trois modes et le nouveau mode réutilise une seule
-   cible autonome.
+1. Le menu propose exactement les trois modes. Le mode fuite affiche le curseur de
+   population et crée le nombre demandé d’instances indépendantes de `TargetFuyante`,
+   sous-classe de `Target` et donc de `Vehicle`.
 2. Les trois curseurs affichent leur valeur en direct et respectent leurs bornes.
 3. Une cible commence à fuir au seuil exact du rayon de détection, dans la direction
    opposée au véhicule le plus proche.
@@ -658,8 +676,18 @@ permet de tester les fonctions de calcul indépendamment du rendu p5.js.
    empêche les redémarrages immédiats.
 6. La barre d’endurance est visible seulement pendant la fuite et son remplissage
    décroît jusqu’à zéro.
-7. Les comportements des modes souris et cible autonome restent inchangés, et aucune
-   classe `vehicle.js` ou `target.js` existante n’est modifiée.
+7. Lorsqu’un vaisseau atteint une cible fuyante, cette instance est supprimée et le
+   compteur visible est décrémenté. Une cible qui survit à la durée configurée se
+   scinde visuellement en deux demi-cercles pendant `0.7` seconde, puis est remplacée
+   par deux instances indépendantes dont les chronomètres sont remis à zéro.
+   La mise à jour des scissions et la suppression après collision utilisent des états
+   de scène définis dans leur fonction d’orchestration ; aucune variable locale ne doit
+   être utilisée depuis une autre fonction de boucle.
+8. Les comportements des modes souris et cible autonome restent inchangés, la cible
+   fuyante utilise l’héritage `TargetFuyante → Target → Vehicle`, et aucune classe
+   `vehicle.js` ou `target.js` existante n’est modifiée.
+9. La touche `d` et la case de l’interface commandent le même mode debug ; le rayon et
+   les vecteurs rouges ne sont visibles que lorsque ce mode est actif.
 
 ### Vérifications et tests à prévoir lors de l’implémentation
 
@@ -671,6 +699,8 @@ permet de tester les fonctions de calcul indépendamment du rendu p5.js.
 - Tests de la fonction de calcul de l’endurance et du remplissage de la barre.
 - Test navigateur vérifiant les trois modes, la mise à jour `input` et l’absence de
   mise à jour double de la cible.
+- Test navigateur du cycle complet : survie, animation de scission, passage d’une
+  cible à deux, collision et décrément du compteur sans erreur JavaScript.
 
 ## Documents associés
 

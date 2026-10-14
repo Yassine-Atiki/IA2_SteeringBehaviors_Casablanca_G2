@@ -44,10 +44,20 @@ class Vehicle {
     return force;
   }
 
-  // comportement de fuite, inverse de seek
+  // comportement de fuite : vitesse désirée opposée à la menace,
+  // puis steering = vitesse désirée - vitesse courante.
+  // si on inverse juste le signe de seek(),
+  // on obtient une version simplifiée de flee() mais qui
+  // ne tient pas compte de la vitesse courante du véhicule.
+  // voir article de Craig Reynolds : https://www.red3d.com/cwr/steer/gdc99/
   flee(target) {
-    // inverse de seek !
-    return this.seek(target).mult(-1);
+    const targetPosition = target.pos || target;
+    const desiredVelocity = p5.Vector.sub(this.pos, targetPosition);
+    if (desiredVelocity.magSq() === 0) return createVector(0, 0);
+    desiredVelocity.setMag(this.maxSpeed);
+    const force = p5.Vector.sub(desiredVelocity, this.vel);
+    force.limit(this.maxForce);
+    return force;
   }
 
   // --------------------------------------------

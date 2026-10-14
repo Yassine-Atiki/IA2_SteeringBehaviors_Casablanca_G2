@@ -29,7 +29,7 @@ function setup() {
   // parameters are : text, x, y, fontSize, options. 
   // sampleFactor : 0.01 = gros points, 0.1 = petits points
   // ca représente la densité des points
-  points = font.textToPoints('Hello!', 350, 250, 305, { sampleFactor: 0.03 });
+  points = font.textToPoints('Hello Casa!', 50, 250, 305, { sampleFactor: 0.03 });
 
   // on cree des vehicules, autant que de points
   creerVehicules(points.length);

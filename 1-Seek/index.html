@@ -13,8 +13,9 @@
     <script src="vehicle.js"></script>
     <script src="target.js"></script>
     <script src="population.js"></script>
-    <script src="target-scene.js"></script>
-    <script src="flee-scene.js"></script>
+    <script src="target-utils.js"></script>
+    <script src="targetFuyante.js"></script>
+    <script src="seek-vehicle.js"></script>
     <script src="plasma.js"></script>
     <script src="interactive-audio.js"></script>
     <script src="sketch.js"></script>
@@ -48,8 +49,18 @@
         </select>
       </div>
 
-      <fieldset class="flee-controls">
+      <label class="debug-toggle" for="debug-toggle">
+        <input id="debug-toggle" type="checkbox">
+        Mode debug (rayon et vecteurs de vitesse)
+      </label>
+
+      <fieldset id="flee-controls" class="flee-controls">
         <legend>Fuite de la cible</legend>
+        <div class="control">
+          <label for="flee-count-slider">Cibles fuyantes</label>
+          <output id="flee-count-value" for="flee-count-slider">3</output>
+          <input id="flee-count-slider" type="range" min="1" max="20" step="1" value="3">
+        </div>
         <div class="control">
           <label for="flee-detection-slider">Rayon de détection</label>
           <output id="flee-detection-value" for="flee-detection-slider">200 px</output>
@@ -64,6 +75,11 @@
           <label for="flee-duration-slider">Durée maximale</label>
           <output id="flee-duration-value" for="flee-duration-slider">2,0 s</output>
           <input id="flee-duration-slider" type="range" min="0.5" max="5" step="0.1" value="2">
+        </div>
+        <div class="control">
+          <label for="flee-duplication-slider">Temps avant duplication</label>
+          <output id="flee-duplication-value" for="flee-duplication-slider">4,0 s</output>
+          <input id="flee-duplication-slider" type="range" min="1" max="10" step="0.1" value="4">
         </div>
       </fieldset>
 

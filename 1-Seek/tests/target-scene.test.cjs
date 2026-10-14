@@ -1,7 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const TargetScene = require("../target-scene.js");
+const TargetScene = require("../target-utils.js");
 
 function createVector(x, y) {
   return {
@@ -58,6 +58,13 @@ test("sélectionne la souris par défaut et conserve une cible autonome unique",
 
 test("retombe sur le mode souris pour une valeur de menu inconnue", () => {
   assert.equal(TargetScene.normalizeMode("inconnu"), TargetScene.MODES.MOUSE);
+});
+
+test("adapte une Target en descripteur avec une position p5.Vector", () => {
+  const target = { pos: createVector(12, 24), r: 30 };
+  const activeTarget = TargetScene.asActiveTarget(target, TargetScene.MODES.FLEE);
+  assert.strictEqual(activeTarget.position, target.pos);
+  assert.equal(activeTarget.radius, 30);
 });
 
 test("détecte le contact avec la somme des rayons, seuil inclus", () => {

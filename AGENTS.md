@@ -19,6 +19,27 @@ Ces règles s'appliquent à tout le dépôt `SteeringBehavioursM2IA2_2026_2027_G
 - Si la base contient une limitation ou un comportement incomplet, le signaler et implémenter la variante dans une sous-classe. Si une modification de la base est réellement indispensable, expliquer le fichier et le changement nécessaires, puis attendre la confirmation avant de toucher à ce fichier. Continuer les parties indépendantes du travail.
 - Avant livraison, vérifier que les fichiers protégés n'ont pas été modifiés par le travail de l'agent. Si l'utilisateur avait déjà des modifications, les conserver telles quelles : ne pas les restaurer depuis Git.
 
+## Règle impérative : toute entité graphique mobile est un Vehicle
+
+Tout objet visible qui peut se déplacer dans la simulation doit être une instance de
+`Vehicle` ou d'une sous-classe de `Vehicle`. Il utilise la locomotion héritée
+(`applyForce()`, `update()`, `edges()`) et un steering behavior pour diriger son
+mouvement. Une cible mobile n'est jamais un simple objet de coordonnées déplacé
+directement par la scène.
+
+- Une cible spécialisée étend la classe `Target` locale, qui elle-même étend
+  `Vehicle`, dans un fichier dédié portant le nom de l'entité, par exemple
+  `targetFuyante.js` pour `TargetFuyante`.
+- La sous-classe réutilise ou surcharge les comportements de `Vehicle` et appelle
+  `super.update()` une seule fois ; elle ne recopie pas l'intégration de position et
+  de vitesse dans `sketch.js`.
+- Les forces de fuite, poursuite ou évitement sont calculées comme des steering
+  behaviors. Les positions ne sont pas téléportées pour simuler un déplacement, sauf
+  pour une règle de scène explicitement documentée comme une réapparition.
+- Les éléments immobiles de l'interface et le décor peuvent rester du HTML ou du
+  rendu p5.js. Cette exception ne s'applique pas à une entité qui se déplace dans le
+  monde simulé.
+
 ## Steering selon Reynolds
 
 Respecter trois responsabilités : **sélection d'action** (choisir l'objectif), **steering** (calculer une force) et **locomotion** (appliquer la force et intégrer le mouvement).
@@ -86,3 +107,13 @@ Ressources officielles vérifiées le 12 octobre 2026 ; consulter la documentati
 - [deltaTime](https://p5js.org/reference/p5/deltaTime/), [input()](https://p5js.org/reference/p5.Element/input/) et [describe()](https://p5js.org/reference/p5/describe/) : temps, interactions et description accessible du canvas.
 
 Les règles d'héritage, de protection des bases et de validation avant essai utilisateur sont des exigences locales de ce dépôt, pas des citations du guide p5.js.
+
+## Entités graphiques et scénarios : directives complémentaires
+
+- Toute entité graphique du monde simulé est un `Vehicle` ou une sous-classe, même lorsqu'elle est initialement immobile (nourriture, obstacle, cible, leurre). Les boutons, curseurs, fonds et dessins de diagnostic restent de l'interface ou du rendu, pas des entités du monde.
+- Tout déplacement autonome est piloté par des steering behaviors, via les forces et la locomotion héritées. Ne pas déplacer une entité en modifiant directement sa position à chaque image. Les réapparitions et les entrées directement pilotées par le pointeur sont des règles de scène distinctes et documentées.
+- Une cible fuyante réutilise le comportement `flee()` hérité : appeler `super.flee(threat.pos)` lorsque le contrat le permet, puis `applyForce()`. Ne pas recoder la formule de fuite dans le contrôleur de scène.
+- Pour une sélection de scénarios, préserver le comportement du scénario existant, isoler l'état de chaque scénario et afficher uniquement les paramètres pertinents. Un changement de scénario réinitialise proprement la fuite, l'endurance et les références aux menaces.
+- Distinguer rayon de déclenchement et distance de sortie. Lorsqu'une menace quitte le rayon de déclenchement, continuer à mesurer sa distance réelle jusqu'au seuil de sortie ; l'absence de menace dans le premier rayon ne prouve pas que le second est atteint.
+- Une fuite limitée dans le temps doit restaurer les paramètres normaux à la sortie ou à l'épuisement. Éviter qu'elle se réactive à l'image suivante et contourne sa durée maximale ; documenter la condition de réarmement.
+- Le debug lit les données de perception et de comportement existantes : ne pas relancer le calcul d'une force pour dessiner. Tester les seuils exacts, le choix du prédateur le plus proche, la durée, la restauration des limites, les transitions de scénario et la synchronisation touche/case debug.

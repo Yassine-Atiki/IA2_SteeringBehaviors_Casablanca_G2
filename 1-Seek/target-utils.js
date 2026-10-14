@@ -31,11 +31,7 @@ const TargetScene = (() => {
 
       getActiveTarget() {
         if (currentMode === MODES.AUTONOMOUS || currentMode === MODES.FLEE) {
-          return {
-            mode: currentMode,
-            position: autonomousTarget.pos,
-            radius: autonomousTarget.r,
-          };
+          return asActiveTarget(autonomousTarget, currentMode);
         }
 
         return {
@@ -45,6 +41,10 @@ const TargetScene = (() => {
         };
       },
     });
+  }
+
+  function asActiveTarget(target, mode = MODES.FLEE) {
+    return { mode, position: target.pos, radius: target.r };
   }
 
   function squaredDistance(firstPosition, secondPosition) {
@@ -150,6 +150,7 @@ const TargetScene = (() => {
     MODES,
     MOUSE_TARGET_RADIUS,
     createTargetSelector,
+    asActiveTarget,
     findRespawnPosition,
     hasReachedTarget,
     isOutsideTarget,

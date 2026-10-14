@@ -60,6 +60,15 @@ canvas {
   margin: 0;
 }
 
+.debug-toggle {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.85rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
 .control select {
   grid-column: 1 / -1;
   box-sizing: border-box;

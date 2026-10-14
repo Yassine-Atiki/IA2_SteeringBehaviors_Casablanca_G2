@@ -28,6 +28,22 @@ Le menu **Cible** permet de choisir entre :
 
 - **Suivre la souris** : tous les véhicules poursuivent le cercle rouge contrôlé par le pointeur ;
 - **Suivre une cible autonome** : tous les véhicules poursuivent une instance mobile de `Target`.
+- **La cible fuit les vaisseaux** : `TargetFuyante` étend `Target` (et donc `Vehicle`) et
+  applique le steering `flee()` avec détection, cooldown, durée maximale et endurance.
+
+Dans ce mode, le curseur **Cibles fuyantes** règle en temps réel le nombre d’instances
+de `TargetFuyante` affichées. Chaque vaisseau suit la cible fuyante la plus proche.
+Une cible touchée par un vaisseau est supprimée. Une cible qui survit au délai réglé
+par **Temps avant duplication** se scinde pendant 0,7 seconde, puis donne naissance à
+deux nouvelles instances indépendantes avec des chronomètres remis à zéro.
+
+Toutes les entités graphiques mobiles de la simulation sont des `Vehicle` ou des
+sous-classes. La cible spécialisée se trouve dans `targetFuyante.js`; les fonctions de
+scène et de réapparition sont dans `target-utils.js`.
+
+Le mode debug se bascule avec la touche `d` ou la case correspondante dans l’interface.
+Il affiche le rayon de détection de la cible en mode fuite et les vecteurs rouges de
+vitesse des vaisseaux.
 
 La cible autonome reste la même lors des changements de mode. Lorsqu'un véhicule touche la cible active, la collision tient compte des deux rayons. Le véhicule réapparaît entièrement dans le canvas, hors de la cible, avec une vitesse et une accélération nulles. Son identité et ses réglages sont conservés.
 

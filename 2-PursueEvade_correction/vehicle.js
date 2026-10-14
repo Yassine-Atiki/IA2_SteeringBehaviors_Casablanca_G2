@@ -33,9 +33,17 @@ class Vehicle {
     return force;
   }
 
-  // inverse de seek !
+  // comportement de fuite : vitesse désirée opposée à la menace,
+  // puis steering = vitesse désirée - vitesse courante.
   flee(target, distanceDeDetection = Infinity) {
-    return this.seek(target.pos, distanceDeDetection).mult(-1);
+    const targetPosition = target.pos || target;
+    if (p5.Vector.dist(this.pos, targetPosition) > distanceDeDetection) return createVector(0, 0);
+    const desiredVelocity = p5.Vector.sub(this.pos, targetPosition);
+    if (desiredVelocity.magSq() === 0) return createVector(0, 0);
+    desiredVelocity.setMag(this.maxSpeed);
+    const force = p5.Vector.sub(desiredVelocity, this.vel);
+    force.limit(this.maxForce);
+    return force;
   }
 
   /* Poursuite d'un point devant la target !
