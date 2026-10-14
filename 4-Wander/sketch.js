@@ -1,99 +1,127 @@
 let vehicles = [];
 let imageFusee;
 let debugCheckbox;
+let countSlider;
+let controls = {};
+
+const DEFAULTS = {
+  maxSpeed: 10,
+  maxForce: 0.1,
+  wanderRadius: 50,
+  distanceCercle: 150,
+  wanderWeight: 2,
+  arriveWeight: 0.5,
+  displaceRange: 0.3,
+  pathLength: 10
+};
 
 function preload() {
-  // on charge une image de fusée pour le vaisseau
   imageFusee = loadImage('./assets/vehicule.png');
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-
-  const nbVehicles = 1;
-  for (let i = 0; i < nbVehicles; i++) {
-    let vehicle = new Vaisseau(100, 100, imageFusee);
-    vehicles.push(vehicle);
-  }
-
-  // On cree des sliders pour régler les paramètres
+  creerSliderPopulation(1);
   creerSlidersPourProprietesVehicules();
+  const mutationButton = createButton('Mutation');
+  mutationButton.parent('controls');
+  mutationButton.class('mutation-button');
+  mutationButton.mousePressed(mutaterTousLesVaisseaux);
 
-  //TODO : creerSliderPourNombreDeVehicules(nbVehicles);
-  //creerSliderPourNombreDeVehicules(nbVehicles);
+  debugCheckbox = createCheckbox('Mode Debug (touche d)', false);
+  debugCheckbox.parent('controls');
+  debugCheckbox.changed(() => {
+    Vehicle.debug = debugCheckbox.checked();
+  });
+  synchroniserPopulation(1);
+  describe('Vaisseaux qui suivent un comportement wander, avec réglages de population, trajectoire et paramètres.');
+}
 
-  //TODO : 
-  //creerSliderPourLongueurCheminDerriereVehicules(20);
+function creerSliderPopulation(initialValue) {
+  const row = creerLigneControle('Nombre de vaisseaux', 1, 40, initialValue, 1);
+  countSlider = row.slider;
+  countSlider.input(() => {
+    row.value.html(countSlider.value());
+    synchroniserPopulation(Number(countSlider.value()));
+  });
 }
 
 function creerSlidersPourProprietesVehicules() {
-  // Slider pour régler la vitesse max
-  creerSliderPourProprieteVehicules(
-    'Vitesse Max:', 'maxSpeed', 1, 20, 10, 1, 10, 10);
+  const sliderSpecs = [
+    ['Vitesse max', 'maxSpeed', 1, 20, 1],
+    ['Force max', 'maxForce', 0.05, 2, 0.05],
+    ['Rayon wander', 'wanderRadius', 5, 100, 5],
+    ['Distance wander', 'distanceCercle', 10, 300, 10],
+    ['Poids wander', 'wanderWeight', 0, 5, 0.1],
+    ['Poids arrive', 'arriveWeight', 0, 5, 0.1],
+    ['Displace range', 'displaceRange', 0, 1, 0.01],
+    ['Longueur de traînée', 'pathLength', 0, 100, 1]
+  ];
 
-  // Slider pour régler la force max
-  creerSliderPourProprieteVehicules(
-    'Force Max:', 'maxForce', 0.05, 2, 0.1, 0.05, 10, 40);
-
-  // Slider pour régler la taille du cercle de wander
-  creerSliderPourProprieteVehicules(
-    'Rayon Wander:', 'wanderRadius', 5, 100, 50, 5, 10, 70);
-
-  // Slider pour régler la distance du cercle de wander
-  creerSliderPourProprieteVehicules(
-    'Distance Wander:', 'distanceCercle', 10, 300, 150, 10, 10, 100);
-
-  // Slider pour régler le poids du comportement wander
-  creerSliderPourProprieteVehicules(
-    'Poids Wander:', 'wanderWeight', 0, 5, 2, 0.1, 10, 130);
-
-  // Slider pour régler le poids du comportement arrive
-  creerSliderPourProprieteVehicules(
-    'Poids Arrive:', 'arriveWeight', 0, 5, 0.5, 0.1, 10, 160);
-
-  // Checkbox pour activer/désactiver le mode debug
-  debugCheckbox = createCheckbox('Mode Debug (touche d)', false);
-  debugCheckbox.position(10, 190);
-  debugCheckbox.style('color', 'white');
-  debugCheckbox.style('font-size', '20px');
-  debugCheckbox.changed(() => {
-    Vehicle.debug = debugCheckbox.checked();
-  }); 
-}
-
-function creerSliderPourProprieteVehicules(labelText, propertyName,
-  min, max, initialValue, step, posX, posY) {
-  let slider = createSlider(min, max, initialValue, step);
-  slider.position(posX + 150, posY);
-  slider.size(180);
-
-  let label = createDiv(labelText);
-  label.position(posX, posY - 3);
-  label.style('color', 'white');
-  label.style('font-size', '20px');
-
-  let valueDisplay = createDiv(slider.value());
-  valueDisplay.position(posX + 350, posY - 3);
-  valueDisplay.style('color', 'white');
-  valueDisplay.style('font-size', '20px');
-
-  slider.input(() => {
-    valueDisplay.html(slider.value());
-    // on met à jour la propriété pour tous les véhicules
-    vehicles.forEach(vehicle => {
-      vehicle[propertyName] = slider.value();
+  sliderSpecs.forEach(([label, property, min, max, step]) => {
+    const row = creerLigneControle(label, min, max, DEFAULTS[property], step);
+    controls[property] = row;
+    row.slider.input(() => {
+      const value = Number(row.slider.value());
+      row.value.html(formatter(property, value));
+      vehicles.forEach(vehicle => {
+        vehicle[property] = value;
+        if (property === 'pathLength' && vehicle.path.length > value) {
+          vehicle.path.splice(0, vehicle.path.length - value);
+        }
+      });
     });
   });
 }
 
+function creerLigneControle(label, min, max, initialValue, step) {
+  const row = createDiv();
+  row.parent('controls');
+  row.class('control-row');
+  const title = createDiv(label);
+  title.parent(row);
+  title.class('control-label');
+  const slider = createSlider(min, max, initialValue, step);
+  slider.parent(row);
+  slider.elt.setAttribute('aria-label', label);
+  const value = createDiv(formatter(label === 'Nombre de vaisseaux' ? 'count' : label, initialValue));
+  value.parent(row);
+  value.class('control-value');
+  return { slider, value };
+}
 
-// appelée 60 fois par seconde
+function formatter(property, value) {
+  return property === 'displaceRange' || property === 'wanderWeight' || property === 'arriveWeight'
+    ? Number(value).toFixed(2)
+    : String(value);
+}
+
+function synchroniserPopulation(count) {
+  ParametresWander.resizePopulation(vehicles, count, () => {
+    const vehicle = new Vaisseau(random(width), random(height), imageFusee);
+    Object.assign(vehicle, DEFAULTS);
+    return vehicle;
+  });
+}
+
+function mutaterTousLesVaisseaux() {
+  vehicles.forEach(vehicle => ParametresWander.mutateVehicle(vehicle));
+  Object.entries(controls).forEach(([property, row]) => {
+    const average = vehicles.length
+      ? vehicles.reduce((sum, vehicle) => sum + vehicle[property], 0) / vehicles.length
+      : DEFAULTS[property];
+    const step = ParametresWander.definitions[property].step;
+    const sliderValue = Math.round(average / step) * step;
+    row.slider.value(sliderValue);
+    row.value.html(vehicles.length > 1 ? 'variés' : formatter(property, average));
+  });
+}
+
 function draw() {
   background(0);
-  //background(0, 0, 0, 20);
-
+  const target = createVector(mouseX, mouseY);
   vehicles.forEach(vehicle => {
-    vehicle.applyBehaviors(createVector(mouseX, mouseY));
+    vehicle.applyBehaviors(target);
     vehicle.update();
     vehicle.show();
     vehicle.edges();
@@ -103,7 +131,6 @@ function draw() {
 function keyPressed() {
   if (key === 'd') {
     Vehicle.debug = !Vehicle.debug;
-    // changer la checkbox, elle doit être checkée si debug est true
     debugCheckbox.checked(Vehicle.debug);
   }
 }
