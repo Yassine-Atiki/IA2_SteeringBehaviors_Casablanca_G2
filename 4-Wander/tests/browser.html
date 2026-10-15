@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<title>Validation Wander avec p5 réel</title>
+<style>body{margin:0}iframe{width:100vw;height:90vh;border:0}</style>
+<pre id="result">RUNNING</pre>
+<iframe src="../index.html"></iframe>
+<script>
+const frame = document.querySelector('iframe');
+const result = document.querySelector('#result');
+const failures = [];
+frame.addEventListener('load', () => {
+  const w = frame.contentWindow;
+  w.addEventListener('error', e => failures.push(e.message));
+  function check(condition, message) { if (!condition) throw new Error(message); }
+  function input(id, value) {
+    const el = w.document.getElementById(`slider-${id}`);
+    el.value = value;
+    el.dispatchEvent(new w.Event('input', { bubbles: true }));
+  }
+  function validate() {
+    if (!w.document.getElementById('controls')) { setTimeout(validate, 50); return; }
+    try {
+      w.noLoop();
+      check(w.eval('vehicles.length') === 20, 'Effectif initial');
+      check(w.document.querySelectorAll('input[type=range]').length === 7, 'Sept curseurs');
+      const slider = w.document.getElementById('slider-displaceRange');
+      check(slider.min === '0' && slider.max === '1' && slider.step === '0.01', 'Plage displaceRange');
+      input('count', 40);
+      check(w.eval('vehicles.length') === 40, 'Ajout par événement input');
+      input('displaceRange', 0.87);
+      check(w.eval('vehicles.every(v => v.displaceRange === 0.87)'), 'Réglage collectif');
+      w.eval('vehicles[0].path = Array.from({length:100}, (_,i) => createVector(i,i))');
+      input('pathLength', 3);
+      check(w.eval('vehicles[0].path.length') === 3, 'Réduction immédiate');
+      input('pathLength', 0);
+      w.draw();
+      check(w.eval('vehicles.every(v => v.path.length === 0)'), 'Traînée désactivée');
+      w.document.getElementById('mutation').click();
+      check(w.eval('vehicles.every(v => Object.entries(parameterSpecs).every(([p,s]) => v[p] >= s.min && v[p] <= s.max))'), 'Bornes après clic Mutation');
+      input('pathLength', 30);
+      input('count', 0);
+      w.document.getElementById('mutation').click();
+      input('count', 20);
+      check(w.eval('vehicles.every(v => v.displaceRange === 0.87 && v.pathLength === 30)'), 'Réglages des nouveaux vaisseaux');
+      w.eval('const oldPos = vehicles[0].pos.copy(); draw(); window.hasMoved = p5.Vector.dist(oldPos, vehicles[0].pos) > 0');
+      check(w.hasMoved, 'Locomotion p5 réelle');
+      check(w.eval('vehicles.every(v => v.vel.mag() <= v.maxSpeed + 1e-9)'), 'Vitesse bornée');
+      check(w.document.querySelector('canvas').width > 0, 'Canvas dessiné');
+      check(failures.length === 0, failures.join('; '));
+      result.textContent = 'PASS: contrôles, population, traînée, mutation et locomotion avec p5.js réel';
+    } catch (error) { result.textContent = `FAIL: ${error.message}`; }
+  }
+  validate();
+});
+</script>
+</html>

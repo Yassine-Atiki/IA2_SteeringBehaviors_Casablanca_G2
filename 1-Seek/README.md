@@ -27,7 +27,8 @@ La cible suit le pointeur uniquement lorsque celui-ci se déplace dans le canvas
 Le menu **Cible** permet de choisir entre :
 
 - **Suivre la souris** : tous les véhicules poursuivent le cercle rouge contrôlé par le pointeur ;
-- **Suivre une cible autonome** : tous les véhicules poursuivent une instance mobile de `Target`.
+- **Suivre une cible autonome** : tous les véhicules poursuivent une instance mobile de `Target` ;
+- **Cible fuyante (`TargetFuyante`)** : la cible est une sous-classe de `Target` (héritant de `Vehicle`) implémentée dans `targetFuyante.js`. Elle utilise les steering behaviors de Craig Reynolds (`flee`) pour fuir l'escadron lorsqu'il s'approche.
 
 La cible autonome reste la même lors des changements de mode. Lorsqu'un véhicule touche la cible active, la collision tient compte des deux rayons. Le véhicule réapparaît entièrement dans le canvas, hors de la cible, avec une vitesse et une accélération nulles. Son identité et ses réglages sont conservés.
 

@@ -3,53 +3,44 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Essaim de lucioles spatiales — Steering Behavior Seek avec p5.js">
 
-    <title>Seek — plusieurs véhicules</title>
+    <title>🚀 Escadron Spatial — Seek Behavior</title>
 
     <link rel="stylesheet" type="text/css" href="style.css">
 
     <script src="libraries/p5.min.js"></script>
-    <script src="libraries/p5.sound.min.js"></script>
     <script src="vehicle.js"></script>
     <script src="target.js"></script>
+    <script src="targetFuyante.js"></script>
     <script src="population.js"></script>
-    <script src="target-scene.js"></script>
     <script src="flee-scene.js"></script>
-    <script src="plasma.js"></script>
+    <script src="starfield.js"></script>
+    <script src="particles.js"></script>
+    <script src="weapons.js"></script>
     <script src="interactive-audio.js"></script>
     <script src="sketch.js"></script>
   </head>
   <body>
-    <button id="ui-toggle" type="button" aria-controls="controls-panel" aria-expanded="false">UI on/off · afficher</button>
-    <aside id="controls-panel" class="controls" aria-label="Paramètres des véhicules" hidden>
-      <h1>Comportement Seek</h1>
-      <fieldset class="plasma-controls">
-        <legend>Musique interactive</legend>
-        <button id="music-toggle" type="button" aria-pressed="false">Activer la musique</button>
-        <p id="music-status" role="status">X : FM et filtre · Y : hauteur</p>
-        <div class="control">
-          <label for="music-volume">Volume</label>
-          <output id="music-volume-value" for="music-volume">25 %</output>
-          <input id="music-volume" type="range" min="0" max="100" step="1" value="25">
-        </div>
-        <div class="control">
-          <label for="music-tempo">Tempo</label>
-          <output id="music-tempo-value" for="music-tempo">124 BPM</output>
-          <input id="music-tempo" type="range" min="80" max="160" step="1" value="124">
-        </div>
-      </fieldset>
+    <button id="ui-toggle" type="button" aria-controls="controls-panel" aria-expanded="false">⚙ Panneau</button>
 
+    <aside id="controls-panel" class="controls" aria-label="Paramètres de l'escadron" hidden>
+      <h1>🚀 Escadron Spatial</h1>
+      <p class="subtitle">Steering Behavior — Seek & Flee (Craig Reynolds)</p>
+
+      <!-- ── Mode cible ── -->
       <div class="control">
-        <label for="target-mode">Cible</label>
+        <label for="target-mode">Mode cible</label>
         <select id="target-mode">
-          <option value="mouse">Suivre la souris</option>
-          <option value="autonomous">Suivre une cible autonome</option>
-          <option value="flee">La cible fuit les vaisseaux</option>
+          <option value="mouse">🖱️ Suivre le curseur</option>
+          <option value="autonomous">🌀 Portail autonome</option>
+          <option value="flee">💨 Le portail fuit l'escadron</option>
         </select>
       </div>
 
-      <fieldset class="flee-controls">
-        <legend>Fuite de la cible</legend>
+      <!-- ── Fuite ── -->
+      <fieldset class="section-group flee-controls">
+        <legend>💨 Fuite du portail</legend>
         <div class="control">
           <label for="flee-detection-slider">Rayon de détection</label>
           <output id="flee-detection-value" for="flee-detection-slider">200 px</output>
@@ -67,63 +58,64 @@
         </div>
       </fieldset>
 
+      <hr class="separator">
+
+      <!-- ── Population de vaisseaux ── -->
       <div class="control">
-        <label for="population-slider">Véhicules</label>
+        <label for="population-slider">🚀 Vaisseaux spatiaux</label>
         <output id="population-value" for="population-slider">20</output>
         <input id="population-slider" type="range" min="1" max="200" step="1" value="20">
       </div>
 
       <div class="control">
-        <label for="speed-slider">Vitesse maximale</label>
+        <label for="speed-slider">Vitesse max</label>
         <output id="speed-value" for="speed-slider">4,0</output>
         <input id="speed-slider" type="range" min="0" max="40" step="0.1" value="4">
       </div>
 
       <div class="control">
-        <label for="force-slider">Force maximale</label>
+        <label for="force-slider">Force max</label>
         <output id="force-value" for="force-slider">0,10</output>
         <input id="force-slider" type="range" min="0" max="10" step="0.01" value="0.1">
       </div>
 
-      <fieldset class="plasma-controls">
-        <legend>Plasma psychédélique</legend>
+      <div class="control">
+        <label for="trail-slider">✨ Sillage ionique</label>
+        <output id="trail-value" for="trail-slider">24</output>
+        <input id="trail-slider" type="range" min="0" max="60" step="1" value="24">
+      </div>
 
+      <hr class="separator">
+
+      <!-- ── Mode Debug IA ── -->
+      <div class="control">
+        <button id="debug-toggle" type="button" class="btn-secondary" aria-pressed="false">🔍 Mode Debug IA (Touche D)</button>
+      </div>
+
+      <!-- ── Prédateur ── -->
+      <fieldset class="section-group">
+        <legend>🦈 Vaisseau Prédateur</legend>
+        <button id="predator-toggle" type="button" class="btn-danger" aria-pressed="false">🦈 Activer le prédateur</button>
+        <p class="status-text">Un croiseur lourd traque vos chasseurs ! (Touche P)</p>
+      </fieldset>
+
+      <!-- ── Musique ── -->
+      <fieldset class="section-group">
+        <legend>🎵 Musique interactive</legend>
+        <button id="music-toggle" type="button" class="btn-primary" aria-pressed="false">🎵 Activer la musique</button>
+        <p id="music-status" class="status-text">X : FM et filtre · Y : hauteur</p>
         <div class="control">
-          <label for="plasma-speed-slider">Vitesse du plasma</label>
-          <output id="plasma-speed-value" for="plasma-speed-slider">1,00</output>
-          <input id="plasma-speed-slider" type="range" min="0" max="3" step="0.05" value="1">
+          <label for="music-volume">Volume</label>
+          <output id="music-volume-value" for="music-volume">25 %</output>
+          <input id="music-volume" type="range" min="0" max="100" step="1" value="25">
         </div>
-
         <div class="control">
-          <label for="plasma-complexity-slider">Complexité</label>
-          <output id="plasma-complexity-value" for="plasma-complexity-slider">4</output>
-          <input id="plasma-complexity-slider" type="range" min="1" max="8" step="1" value="4">
-        </div>
-
-        <div class="control">
-          <label for="plasma-size-slider">Taille des blobs</label>
-          <output id="plasma-size-value" for="plasma-size-slider">160</output>
-          <input id="plasma-size-slider" type="range" min="40" max="400" step="10" value="160">
-        </div>
-
-        <div class="control">
-          <label for="plasma-hue-slider">Teinte</label>
-          <output id="plasma-hue-value" for="plasma-hue-slider">0°</output>
-          <input id="plasma-hue-slider" type="range" min="0" max="360" step="1" value="0">
-        </div>
-
-        <div class="control">
-          <label for="plasma-saturation-slider">Saturation</label>
-          <output id="plasma-saturation-value" for="plasma-saturation-slider">90 %</output>
-          <input id="plasma-saturation-slider" type="range" min="40" max="100" step="1" value="90">
-        </div>
-
-        <div class="control">
-          <label for="plasma-mouse-slider">Influence de la souris</label>
-          <output id="plasma-mouse-value" for="plasma-mouse-slider">1,00</output>
-          <input id="plasma-mouse-slider" type="range" min="0" max="2" step="0.05" value="1">
+          <label for="music-tempo">Tempo</label>
+          <output id="music-tempo-value" for="music-tempo">124 BPM</output>
+          <input id="music-tempo" type="range" min="80" max="160" step="1" value="124">
         </div>
       </fieldset>
+
     </aside>
   </body>
 </html>

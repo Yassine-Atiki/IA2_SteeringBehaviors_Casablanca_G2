@@ -19,6 +19,15 @@ Ces règles s'appliquent à tout le dépôt `SteeringBehavioursM2IA2_2026_2027_G
 - Si la base contient une limitation ou un comportement incomplet, le signaler et implémenter la variante dans une sous-classe. Si une modification de la base est réellement indispensable, expliquer le fichier et le changement nécessaires, puis attendre la confirmation avant de toucher à ce fichier. Continuer les parties indépendantes du travail.
 - Avant livraison, vérifier que les fichiers protégés n'ont pas été modifiés par le travail de l'agent. Si l'utilisateur avait déjà des modifications, les conserver telles quelles : ne pas les restaurer depuis Git.
 
+## Règle impérative : tout ce qui bouge est un Vehicle avec Steering Behaviors
+
+**TOUT ce qui bouge à l'écran doit être un `Vehicle` (ou une sous-classe de `Vehicle`) et doit utiliser les steering behaviors.**
+Dorénavant, tout objet graphique à l'écran sera par défaut un `Vehicle` s'il peut se déplacer.
+
+- **Obligation des steering behaviors** : Tout objet mobile doit obligatoirement suivre l'architecture de Craig Reynolds : sélection d'action -> calcul d'une force de direction (steering) -> application de la force via `applyForce()` -> intégration de la vitesse et de la position via `update()`. Aucune entité mobile ne doit utiliser de cinématique ad-hoc, de déplacement par pas artificiel ou de téléportation continue.
+- **Cible fuyante (`TargetFuyante`)** : Une cible qui fuit doit être une sous-classe de `Target` (`class TargetFuyante extends Target`) et hériter de ses comportements et de son rendu, et PAS une ré-implémentation complète ni un contrôleur externe déconnecté n'utilisant pas les steering behaviors. Elle calcule et applique ses forces d'évitement/fuite (`this.flee(...)`) selon les principes de Reynolds.
+- **Nommage des fichiers** : Chaque entité spécialisée doit être implémentée dans son propre fichier nommé d'après sa classe (par exemple `targetFuyante.js` pour `TargetFuyante`, et non des fichiers génériques ou fourre-tout tels que `target-scene.js`).
+
 ## Steering selon Reynolds
 
 Respecter trois responsabilités : **sélection d'action** (choisir l'objectif), **steering** (calculer une force) et **locomotion** (appliquer la force et intégrer le mouvement).

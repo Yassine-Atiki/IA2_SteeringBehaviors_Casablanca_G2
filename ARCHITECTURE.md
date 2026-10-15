@@ -56,6 +56,15 @@ Cet arbre est une convention pour les évolutions futures, pas une liste de fich
 - Les fonctions utilitaires pures peuvent aider au calcul, mais la nouvelle capacité de steering reste exposée et intégrée par la sous-classe.
 - Ne pas recopier la base ou redéfinir son prototype. Ne pas créer une seconde méthode du même nom dans une classe : la dernière masquerait la première.
 
+### Règle d'or : Tout objet mobile est un `Vehicle` avec Steering Behaviors
+
+**TOUT ce qui bouge à l'écran doit être un `Vehicle` (ou une sous-classe de `Vehicle`) et doit utiliser les steering behaviors.**
+Dorénavant, tout objet graphique à l'écran sera par défaut un `Vehicle` s'il peut se déplacer.
+
+- **Conformité stricte à Craig Reynolds** : Toute entité mobile calcule des forces de direction et les applique via `applyForce()`, puis intègre son mouvement par `update()`. Aucune entité ne doit contourner la physique du véhicule par une modification cinématique directe de ses coordonnées.
+- **Cible fuyante (`TargetFuyante`)** : Une cible qui fuit doit être une sous-classe de `Target` (`class TargetFuyante extends Target`) et PAS une ré-implémentation complète n'utilisant pas les steering behaviors. Elle hérite du comportement et du rendu de `Target` (qui hérite elle-même de `Vehicle`), et utilise des forces de fuite/steering (`flee`) pour échapper à ses poursuivants.
+- **Nommage des fichiers** : Les classes concrètes doivent résider dans un fichier dédié à leur nom (ex. `targetFuyante.js` pour `TargetFuyante`, et non `target-scene.js`).
+
 Les obstacles représentés comme entités de la simulation suivent la même organisation ; une sous-classe immobile n'a pas à appeler `update()`. Les contrôles HTML, le fond et les services audio peuvent être de simples fonctions ou services, sans héritage de `Vehicle`.
 
 ## 3. Forces et locomotion

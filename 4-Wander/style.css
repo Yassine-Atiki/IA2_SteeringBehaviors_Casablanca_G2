@@ -6,3 +6,33 @@ html, body {
 canvas {
   display: block;
 }
+
+body { background: black; color: white; font-family: system-ui, sans-serif; }
+#controls {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  box-sizing: border-box;
+  width: min(510px, calc(100vw - 20px));
+  max-height: calc(100vh - 20px);
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid #555;
+  border-radius: 8px;
+  background: rgba(18, 22, 30, 0.9);
+}
+.control-row {
+  display: grid;
+  grid-template-columns: 145px minmax(60px, 1fr) 100px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.control-row input { width: 100%; margin: 0; }
+.control-row output { text-align: right; font-variant-numeric: tabular-nums; font-size: 14px; }
+button { padding: 7px 16px; margin-right: 12px; cursor: pointer; }
+#controls p { font-size: 12px; line-height: 1.5; margin-bottom: 0; color: #d0d6e0; }
+@media (max-width: 480px) {
+  .control-row { grid-template-columns: 1fr 100px; }
+  .control-row label { grid-column: 1 / -1; }
+}
