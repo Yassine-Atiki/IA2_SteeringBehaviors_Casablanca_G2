@@ -45,6 +45,16 @@ Le mode debug se bascule avec la touche `d` ou la case correspondante dans l’i
 Il affiche le rayon de détection de la cible en mode fuite et les vecteurs rouges de
 vitesse des vaisseaux.
 
+## Serpents Wander
+
+Trois serpents colorés parcourent aussi le canvas de façon autonome. Leur tête
+utilise le steering `wander()` avec une direction persistante et une petite
+variation angulaire par image ; un steering de bord évite qu'ils ne quittent le
+canvas, et les anneaux suivent le précédent avec `arrive()`.
+La base `Vehicle` locale fournit ces deux comportements. Les classes `Snake`,
+`SnakeRing` et `SnakeWander` sont copiées dans ce dossier pour garder l’exercice
+autonome et ne dépendent pas des fichiers d’un autre exemple.
+
 La cible autonome reste la même lors des changements de mode. Lorsqu'un véhicule touche la cible active, la collision tient compte des deux rayons. Le véhicule réapparaît entièrement dans le canvas, hors de la cible, avec une vitesse et une accélération nulles. Son identité et ses réglages sont conservés.
 
 ## Plasma psychédélique — tâche 3
@@ -80,8 +90,10 @@ Depuis le dossier `1-Seek` :
 node --test tests/*.test.cjs
 ```
 
-Les tests couvrent les bornes des paramètres, la conservation des instances, la propagation de la vitesse et de la force, la position initiale des nouveaux véhicules, la réaction immédiate aux événements `input`, le choix de la cible, les collisions, la réapparition et le calcul du plasma.
+Les tests couvrent les bornes des paramètres, la conservation des instances, la propagation de la vitesse et de la force, la position initiale des nouveaux véhicules, la réaction immédiate aux événements `input`, le choix de la cible, les collisions, la réapparition, le calcul du plasma et les trois serpents wander.
 
-Les fichiers `vehicle.js` et `target.js` restent inchangés.
+`target.js` reste inchangé. `vehicle.js` ajoute les paramètres et méthodes `wander()`,
+`arrive()` et `boundaries()` nécessaires aux serpents, tout en conservant le
+comportement historique de `seek(target)` pour les véhicules Seek.
 
 Pour la validation du signal avec la Web Audio API réelle, ouvrir `tests/audio-browser.html` via le serveur local et cliquer sur **Exécuter les tests audio**. Le rendu hors ligne mesure le mix avant et après coupure, vérifie l'annulation des notes futures et le nettoyage des sources.

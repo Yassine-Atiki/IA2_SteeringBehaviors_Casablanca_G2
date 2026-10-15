@@ -9,6 +9,8 @@ let music;
 let musicBlend = 0;
 let debugMode = false;
 const vehicles = [];
+const snakes = [];
+const snakeColors = ['#5ee0af', '#ffcb6b', '#f78cba'];
 
 let currentMaxSpeed = VehiclePopulation.LIMITS.maxSpeed.defaultValue;
 let currentMaxForce = VehiclePopulation.LIMITS.maxForce.defaultValue;
@@ -24,6 +26,7 @@ function setup() {
   // Même le marqueur piloté par la souris est une entité Target/Vehicle.
   mouseTarget = new Target(random(width), random(height));
   autonomousTarget = new TargetFuyante(random(width), random(height));
+  createWanderSnakes();
   setFleeTargetCount(3);
   targetSelector = TargetScene.createTargetSelector(mouseTarget.pos, autonomousTarget);
   plasmaState = PsychedelicPlasma.createState();
@@ -34,7 +37,8 @@ function setup() {
   trackPointerInsideCanvas();
 
   describe(
-    "Plusieurs véhicules bleus utilisent le comportement Seek. Ils peuvent suivre la souris " +
+    "Plusieurs véhicules bleus utilisent le comportement Seek. Trois serpents colorés " +
+    "utilisent le comportement Wander. Les véhicules bleus peuvent suivre la souris " +
     "ou une cible autonome, devant un plasma psychédélique interactif. Des curseurs règlent " +
     "les véhicules et l'animation du fond."
   );
@@ -69,6 +73,11 @@ function draw() {
 
     SeekVehicle.debug = debugMode;
     vehicle.show();
+  }
+  for (const snake of snakes) {
+    snake.updateWander();
+    snake.edges();
+    snake.show();
   }
   if (deadTargets.size > 0) {
     for (const target of deadTargets) {
@@ -236,6 +245,31 @@ function createVehicleAtRandomPosition() {
     currentMaxSpeed,
     currentMaxForce
   );
+}
+
+function createWanderSnakes() {
+  const anchors = [
+    { x: width * 0.25, y: height * 0.28 },
+    { x: width * 0.75, y: height * 0.38 },
+    { x: width * 0.5, y: height * 0.76 }
+  ];
+  for (let index = 0; index < anchors.length; index++) {
+    const anchor = anchors[index];
+    const angle = random(TWO_PI);
+    const snake = new SnakeWander(anchor.x, anchor.y, {
+      couleur: snakeColors[index],
+      direction: createVector(cos(angle), sin(angle)),
+      ringCount: 8,
+      headSpeed: 2.5,
+      headForce: 0.12,
+      headBraking: 65,
+      ringSpeed: 3,
+      ringForce: 0.2,
+      ringBraking: 45
+    });
+    snake.wanderTheta = random(-PI, PI);
+    snakes.push(snake);
+  }
 }
 
 function createFleeTargetAtRandomPosition() {
@@ -426,6 +460,7 @@ function drawFleeCount() {
 
 function setDebugMode(enabled) {
   debugMode = Boolean(enabled);
+  Vehicle.debug = debugMode;
   SeekVehicle.debug = debugMode;
   const input = document.querySelector("#debug-toggle");
   if (input) input.checked = debugMode;

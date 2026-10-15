@@ -20,9 +20,9 @@ test('mutateValue moves by at least one valid step and clamps at each bound', ()
   const spec = definitions.displaceRange;
   assert.equal(mutateValue(0.5, spec, () => 0), 0.49);
   let calls = 0;
-  assert.equal(mutateValue(0.5, spec, () => (++calls % 2 === 1 ? 0.99 : 0)), 0.51);
-  assert.equal(mutateValue(0, spec, () => 0), 0);
-  assert.equal(mutateValue(1, spec, () => 0.99), 1);
+  assert.equal(mutateValue(0.3, spec, () => (++calls % 2 === 1 ? 0.99 : 0)), 0.31);
+  assert.equal(mutateValue(0.1, spec, () => 0), 0.1);
+  assert.equal(mutateValue(0.5, spec, () => 0.99), 0.5);
 });
 
 test('mutation changes every per-vessel setting within its supported range', () => {
@@ -48,7 +48,7 @@ test('mutation changes every per-vessel setting within its supported range', () 
 test('mutation handles empty trails and values already at a limit', () => {
   const vehicle = {
     maxSpeed: 1, maxForce: 2, wanderRadius: 5, distanceCercle: 10,
-    wanderWeight: 0, arriveWeight: 5, displaceRange: 0, pathLength: 0, path: []
+    wanderWeight: 0, arriveWeight: 5, displaceRange: 0.1, pathLength: 0, path: []
   };
   let calls = 0;
   mutateVehicle(vehicle, () => (++calls % 2 === 1 ? 0.99 : 0));

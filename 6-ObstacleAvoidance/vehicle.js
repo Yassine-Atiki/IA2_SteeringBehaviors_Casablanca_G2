@@ -57,7 +57,7 @@ class Vehicle {
 
     seekForce.mult(0.2);
     avoidForce.mult(3);
-    separateForce.mult(0.2);
+    separateForce.mult(0.3);
     boudariesForce.mult(3);
 
     this.applyForce(seekForce);

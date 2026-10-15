@@ -5,7 +5,7 @@ let countSlider;
 let controls = {};
 
 const DEFAULTS = {
-  maxSpeed: 10,
+  maxSpeed: 1,
   maxForce: 0.1,
   wanderRadius: 50,
   distanceCercle: 150,
@@ -54,7 +54,7 @@ function creerSlidersPourProprietesVehicules() {
     ['Distance wander', 'distanceCercle', 10, 300, 10],
     ['Poids wander', 'wanderWeight', 0, 5, 0.1],
     ['Poids arrive', 'arriveWeight', 0, 5, 0.1],
-    ['Displace range', 'displaceRange', 0, 1, 0.01],
+    ['Displace range', 'displaceRange', 0.1, 0.5, 0.01],
     ['Longueur de traînée', 'pathLength', 0, 100, 1]
   ];
 

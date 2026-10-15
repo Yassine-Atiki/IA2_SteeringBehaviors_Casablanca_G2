@@ -1,4 +1,6 @@
 class Vehicle {
+  static debug = false;
+
   constructor(x, y) {
     // position du véhicule
     this.pos = createVector(x, y);
@@ -12,6 +14,14 @@ class Vehicle {
     this.maxForce = 0.1;
     // rayon du véhicule
     this.r = 16;
+    this.rayonZoneDeFreinage = 100;
+
+    // Paramètres du comportement wander : le point de pilotage est placé
+    // devant le véhicule et sa direction évolue graduellement dans le temps.
+    this.distanceCercle = 150;
+    this.wanderRadius = 50;
+    this.wanderTheta = -Math.PI / 2;
+    this.displaceRange = 0.3;
   }
 
   
@@ -23,16 +33,27 @@ class Vehicle {
   // seek est un comportement qui permet de faire se rapprocher le véhicule de 
   // la cible passée en paramètre (un vecteur p5.Vector, par exemple la position de 
   // la souris)
-  seek(target) {
+  seek(target, arrival = false, distanceArret = 0) {
  
     // on calcule la direction vers la cible : la vitesse DESIREE
     // C'est l'ETAPE 1 (action : se diriger vers une cible)
     let desiredSpeed = p5.Vector.sub(target, this.pos);
 
+    if (arrival && desiredSpeed.mag() < this.rayonZoneDeFreinage) {
+      const vitesse = map(
+        desiredSpeed.mag(),
+        distanceArret,
+        this.rayonZoneDeFreinage,
+        0,
+        this.maxSpeed
+      );
+      desiredSpeed.setMag(vitesse);
+    } else {
+      desiredSpeed.setMag(this.maxSpeed);
+    }
+
     // Dessous c'est l'ETAPE 2 : le pilotage (comment on se dirige vers la cible)
     // on limite ce vecteur à la longueur maxSpeed
-    desiredSpeed.setMag(this.maxSpeed);
-
     // Si on s'arrête ici, force = desiredSpeed
 
     // on calcule maintenant LA FORMULE MAGIQUE : force = desiredSpeed - currentSpeed
@@ -41,6 +62,79 @@ class Vehicle {
     // et on limite cette force à la longueur maxForce
     force.limit(this.maxForce);
 
+    return force;
+  }
+
+  arrive(target, distanceArret = 0) {
+    return this.seek(target, true, distanceArret);
+  }
+
+  wander() {
+    const center = this.vel.copy();
+    center.setMag(this.distanceCercle);
+    center.add(this.pos);
+
+    const angle = this.wanderTheta + this.vel.heading();
+    const target = createVector(
+      this.wanderRadius * cos(angle),
+      this.wanderRadius * sin(angle)
+    ).add(center);
+
+    if (Vehicle.debug) {
+      push();
+      noFill();
+      stroke(255);
+      circle(center.x, center.y, this.wanderRadius * 2);
+      stroke(255, 255, 255, 80);
+      drawingContext.setLineDash([5, 15]);
+      line(this.pos.x, this.pos.y, center.x, center.y);
+      drawingContext.setLineDash([]);
+      stroke('yellow');
+      line(this.pos.x, this.pos.y, target.x, target.y);
+      fill('green');
+      noStroke();
+      circle(target.x, target.y, 10);
+      pop();
+    }
+
+    this.wanderTheta += random(-this.displaceRange, this.displaceRange);
+    return p5.Vector.sub(target, this.pos).limit(this.maxForce);
+  }
+
+  boundaries(left, top, width, height, margin) {
+    const horizontalMargin = Math.min(margin, width / 2);
+    const verticalMargin = Math.min(margin, height / 2);
+    const desiredVelocity = this.vel.copy();
+    let steeringNeeded = false;
+
+    if (this.pos.x < left + horizontalMargin) {
+      desiredVelocity.x = this.maxSpeed;
+      steeringNeeded = true;
+    } else if (this.pos.x > left + width - horizontalMargin) {
+      desiredVelocity.x = -this.maxSpeed;
+      steeringNeeded = true;
+    }
+    if (this.pos.y < top + verticalMargin) {
+      desiredVelocity.y = this.maxSpeed;
+      steeringNeeded = true;
+    } else if (this.pos.y > top + height - verticalMargin) {
+      desiredVelocity.y = -this.maxSpeed;
+      steeringNeeded = true;
+    }
+
+    if (!steeringNeeded) return createVector(0, 0);
+    desiredVelocity.setMag(this.maxSpeed);
+    const force = p5.Vector.sub(desiredVelocity, this.vel).limit(this.maxForce);
+    if (Vehicle.debug) {
+      push();
+      noFill();
+      stroke('white');
+      rect(left, top, width, height);
+      stroke('red');
+      rect(left + horizontalMargin, top + verticalMargin,
+        width - horizontalMargin * 2, height - verticalMargin * 2);
+      pop();
+    }
     return force;
   }
 

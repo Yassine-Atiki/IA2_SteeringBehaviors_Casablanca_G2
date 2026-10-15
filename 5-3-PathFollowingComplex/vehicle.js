@@ -26,7 +26,7 @@ class Vehicle {
     // Poids pour les force des différents comportements
     this.wanderWeight = 0;
     this.followPathWeight = 2;
-    this.separateWeight = 1.2;
+    this.separateWeight = 0.8;
 
      // pour comportement wander
      this.distanceCercle = 100;

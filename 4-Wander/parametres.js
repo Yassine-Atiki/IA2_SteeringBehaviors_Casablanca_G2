@@ -12,7 +12,7 @@
     distanceCercle: { min: 10, max: 300, step: 10 },
     wanderWeight: { min: 0, max: 5, step: 0.1 },
     arriveWeight: { min: 0, max: 5, step: 0.1 },
-    displaceRange: { min: 0, max: 1, step: 0.01 },
+    displaceRange: { min: 0.1, max: 0.5, step: 0.01 },
     pathLength: { min: 0, max: 100, step: 1 }
   };
 
