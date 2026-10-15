@@ -29,7 +29,27 @@ Chaque exemple possède sa propre classe `Vehicle`. Ces variantes contiennent du
 
 Si une évolution semble nécessiter de toucher à la base : chercher d'abord une extension par héritage, puis, si cela reste indispensable, expliquer précisément le changement et attendre l'accord. Les modifications déjà présentes de l'utilisateur restent à préserver.
 
-## 2. Extensions : sous-classes dans des fichiers dédiés
+## 2. Toute entité mobile est un Vehicle
+
+Tout objet graphique qui se déplace dans le monde simulé doit être un `Vehicle` ou une
+sous-classe de `Vehicle`. Sa direction vient d'un steering behavior, ses forces passent
+par `applyForce()` et son déplacement est intégré par `update()`. La scène ne modifie
+pas directement sa position à chaque frame.
+
+Une cible mobile est donc une vraie entité autonome. Une spécialisation de `Target`
+doit être écrite dans son propre fichier : par exemple `TargetFuyante extends Target`
+dans `targetFuyante.js`. Elle réutilise l'héritage de `Target` et `Vehicle`, peut
+surcharger `flee()` ou `updateFlee()` pour sélectionner et appliquer ses forces, puis
+délègue l'intégration à `super.update()`. Un contrôleur de scène ne remplace pas cette
+sous-classe en appliquant lui-même des forces à une cible générique.
+
+Les fonctions de scène peuvent sélectionner une menace, gérer un seuil, un cooldown,
+une réapparition ou un indicateur d'endurance, mais elles ne deviennent pas une
+seconde implémentation de la locomotion. Les éléments purement décoratifs, le plasma,
+les boutons et les curseurs ne sont pas des entités mobiles et restent des fonctions
+de rendu ou des contrôles DOM.
+
+## 3. Extensions : sous-classes dans des fichiers dédiés
 
 Tout nouveau comportement ou toute spécialisation de comportement appartient à une sous-classe du `Vehicle` de l'exemple concerné. Une nouvelle entité autonome possède son propre fichier :
 
@@ -67,7 +87,7 @@ Dorénavant, tout objet graphique à l'écran sera par défaut un `Vehicle` s'il
 
 Les obstacles représentés comme entités de la simulation suivent la même organisation ; une sous-classe immobile n'a pas à appeler `update()`. Les contrôles HTML, le fond et les services audio peuvent être de simples fonctions ou services, sans héritage de `Vehicle`.
 
-## 3. Forces et locomotion
+## 4. Forces et locomotion
 
 Pour un seek classique :
 
@@ -84,7 +104,7 @@ Une nouvelle sous-classe calcule les composantes de steering, les pondère ou le
 
 Ne pas changer les unités du mouvement sans conception explicite : conserver le modèle par image de la base existante. Ajouter `deltaTime` à un seul niveau produirait un modèle incohérent. La méthode `edges()` ne doit être appelée que conformément à la règle de bord choisie ; vérifier si elle est déjà appelée par l'implémentation locale.
 
-## 4. Scène, rendu et ressources
+## 5. Scène, rendu et ressources
 
 `sketch.js` reste le contrôleur de l'exemple : initialisation dans `setup()`, collecte des entrées, choix des cibles, mise à jour de la population et orchestration de `draw()`. Il ne doit pas accumuler les nouvelles classes d'entités ni leurs formules de steering.
 
@@ -94,13 +114,13 @@ Les nouvelles méthodes de dessin isolent leurs styles et transformations par `p
 
 Initialiser contrôles et écouteurs une seule fois. Garder des références pour nettoyer les timers, écouteurs ou nœuds audio ajoutés. Ne pas modifier le code historique hors périmètre pour le rendre conforme rétroactivement à ces conventions.
 
-## 5. Chargement et autonomie des exemples
+## 6. Chargement et autonomie des exemples
 
 Pour des scripts classiques, charger p5.js, `vehicle.js`, les sous-classes et aides nécessaires, puis `sketch.js`. Lire les classes déjà déclarées avant d'ajouter un nouveau nom : dans `3-Arrival` et `3-Arrival_correction`, `Target` est déjà déclarée dans `vehicle.js`.
 
 Conserver l'autonomie de chaque sous-dossier et sa version de p5.js. Une classe d'un exemple ne doit pas dépendre implicitement d'un autre dossier ni imposer une refonte des bases existantes. Ne pas convertir en modules ou en mode instance sans besoin lié à la demande et vérification du chargement.
 
-## 6. Tests et condition de livraison
+## 7. Tests et condition de livraison
 
 Chaque fonctionnalité ajoutée comporte des tests unitaires dans l'exemple concerné. Respecter les exigences de [AGENTS.md](AGENTS.md) : vraies méthodes testées, aléatoire reproductible, limites de force/vitesse, cas géométriques et composition selon le changement.
 
@@ -113,3 +133,13 @@ Séparer les tests mathématiques et d'état des vérifications navigateur. Un a
 ## Sources p5.js
 
 Les références officielles et les conventions de codage applicables sont regroupées dans [AGENTS.md](AGENTS.md#références-p5js-consultées), notamment le [guide de style des exemples](https://p5js.org/contribute/documentation_style_guide/). Leur usage ne remplace ni les contrats des bases locales ni les exigences pédagogiques de ce dépôt.
+
+## 8. Entités de scène, perception et scénarios
+
+Toute entité du monde représentée graphiquement est un `Vehicle` ou une sous-classe, y compris les entités actuellement immobiles. Les contrôles DOM, le fond et les superpositions de diagnostic restent des éléments d'interface ou de rendu. Le passage d'immobile à mobile doit utiliser les steering behaviors et la locomotion héritée.
+
+Une cible fuyante est définie dans un fichier dédié. Elle peut étendre le `Target` local (lui-même sous-classe de `Vehicle`) pour conserver son comportement normal et spécialiser uniquement la perception, les états de fuite et le rendu d'endurance. La fuite réutilise la méthode héritée avec `super.flee()` et ne recopie pas ses formules dans `sketch.js`.
+
+Le contrôleur choisit le scénario et transmet les véhicules et le temps écoulé ; l'entité porte les transitions normal/fuite/épuisement. Pendant la fuite, suivre les distances réelles aux prédateurs au-delà du rayon de détection, jusqu'à la distance de sécurité. Restaurer les limites normales à la sortie et prévoir un réarmement explicite après épuisement. Le rendu debug affiche l'état de perception sans modifier le steering.
+
+Quand la description du scénario courant ne correspond pas au dossier précédemment travaillé, clarifier le dossier avant de remplacer le sketch. Préserver les autres exercices et les modifications déjà présentes.

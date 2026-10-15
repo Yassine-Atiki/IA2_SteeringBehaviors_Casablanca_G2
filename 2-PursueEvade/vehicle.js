@@ -1,4 +1,6 @@
 class Vehicle {
+  static debug = false;
+
   constructor(x, y) {
     // position du véhicule
     this.pos = createVector(x, y);
@@ -33,18 +35,25 @@ class Vehicle {
     return force;
   }
 
-  // inverse de seek !
+  // comportement de fuite : vitesse désirée opposée à la menace,
+  // puis steering = vitesse désirée - vitesse courante.
   flee(target, distanceDeDetection = Infinity) {
-    return this.seek(target.pos, distanceDeDetection).mult(-1);
+    const targetPosition = target.pos || target;
+    if (p5.Vector.dist(this.pos, targetPosition) > distanceDeDetection) return createVector(0, 0);
+    const desiredVelocity = p5.Vector.sub(this.pos, targetPosition);
+    if (desiredVelocity.magSq() === 0) return createVector(0, 0);
+    desiredVelocity.setMag(this.maxSpeed);
+    const force = p5.Vector.sub(desiredVelocity, this.vel);
+    force.limit(this.maxForce);
+    return force;
   }
 
   /* Poursuite d'un point devant la target !
      cette methode renvoie la force à appliquer au véhicule
   */
-  pursue(target) {
+  pursue(target, predictionDistance = 20, showDebug = Vehicle.debug) {
 
-    // On dessine le vecteur vitesse de la target
-    this.drawVector(target.pos, target.vel.copy().mult(10));
+    if (showDebug) this.drawVector(target.pos, target.vel.copy().mult(10));
 
     // TODO
     // 1 - calcul de la position future de la cible
@@ -56,7 +65,7 @@ class Vehicle {
     // 2 - prediction dans 10 frames = 10 fois la longueur du vecteur
     // (on multiplie le vecteur vitesse par 10)
     // TODO
-    targetAhead.mult(20);
+    targetAhead.mult(predictionDistance);
 
     // 3 - on positionne  la target au bout de ce vecteur
     // (on ajoute ce vecteur à la position de la target)
@@ -64,8 +73,10 @@ class Vehicle {
     targetAhead.add(target.pos);
 
     // 4 -dessin du point devant la target
-    fill("green");
-    circle(targetAhead.x, targetAhead.y, 16); 
+    if (showDebug) {
+      fill("green");
+      circle(targetAhead.x, targetAhead.y, 16);
+    }
 
     // 6 - appel à seek avec ce point comme cible 
     let force = this.seek(targetAhead);
@@ -74,33 +85,62 @@ class Vehicle {
     return force;
   }
 
-  /* inverse de pursue
-     cette methode renvoie la force à appliquer au véhicule
-  */
-  evade(target) {
-    // TODO : on inverse la logique de pursue
-    let force = this.pursue(target).mult(-1);
-    return force;
+  /*
+   * Prédit le point de rapprochement le plus probable de la menace, puis
+   * réutilise flee(). La prédiction tient compte du mouvement relatif :
+   * elle évite de fuir vers la menace actuelle lorsqu'une prédiction fixe
+   * dépasse le point de croisement.
+   */
+  predictThreatPosition(threat, maxPrediction = 20) {
+    const relativePosition = p5.Vector.sub(threat.pos, this.pos);
+    const relativeVelocity = p5.Vector.sub(threat.vel, this.vel);
+    const relativeSpeedSquared = relativeVelocity.magSq();
+    let prediction = 0;
+    if (relativeSpeedSquared > 0.0001) {
+      prediction = -p5.Vector.dot(relativePosition, relativeVelocity) / relativeSpeedSquared;
+      prediction = constrain(prediction, 0, Math.max(0, maxPrediction));
+    }
+    const predicted = threat.vel.copy().mult(prediction).add(threat.pos);
+    // Au point de collision, la direction vers le point prédit est nulle.
+    // On revient alors à la position actuelle de la menace.
+    if (p5.Vector.dist(this.pos, predicted) < 0.0001) return threat.pos.copy();
+    return predicted;
+  }
+
+  evade(target, predictionDistance = 20, showDebug = Vehicle.debug) {
+    const threatPosition = this.predictThreatPosition(target, predictionDistance);
+    if (showDebug) {
+      fill("orange");
+      circle(threatPosition.x, threatPosition.y, 10);
+    }
+    return this.flee(threatPosition);
   }
 
   /**  Fonction de poursuite parfaite (avec le point devant la
   target qui se rapproche quand le poursuiveur se rapproche)
   */
-  pursuePerfect(vehicle) {
+  pursuePerfect(vehicle, showDebug = Vehicle.debug) {
     // Use the Law of Sines (https://en.wikipedia.org/wiki/Law_of_sines)
     // to predict the right collision point
-    const speed_ratio = vehicle.vel.mag() / this.maxSpeed;
+    if (this.maxSpeed <= 0 || vehicle.vel.magSq() === 0) {
+      return this.seek(vehicle.pos);
+    }
+    const speed_ratio = constrain(vehicle.vel.mag() / this.maxSpeed, -0.999, 0.999);
     const target_angle = vehicle.vel.angleBetween(p5.Vector.sub(this.pos, vehicle.pos));
     const my_angle = asin(sin(target_angle) * speed_ratio);
     const dist = this.pos.dist(vehicle.pos);
-    const prediction = dist * sin(my_angle) / sin(PI - my_angle - target_angle);
+    const denominator = sin(PI - my_angle - target_angle);
+    const prediction = Math.abs(denominator) < 0.0001
+      ? 0
+      : dist * sin(my_angle) / denominator;
     const target = vehicle.vel.copy().setMag(prediction).add(vehicle.pos);
     
-    drawArrow(vehicle.pos, p5.Vector.mult(vehicle.vel, 20), 'red');
-    drawArrow(this.pos, p5.Vector.sub(target, this.pos), 'green');
-    
-    fill(0, 255, 0);
-    circle(target.x, target.y, 8);
+    if (showDebug) {
+      drawArrow(vehicle.pos, p5.Vector.mult(vehicle.vel, 20), 'red');
+      drawArrow(this.pos, p5.Vector.sub(target, this.pos), 'green');
+      fill(0, 255, 0);
+      circle(target.x, target.y, 8);
+    }
     return this.seek(target);
   }
 
@@ -126,7 +166,7 @@ class Vehicle {
   }
 
   // On dessine le véhicule
-  show() {
+  show(showDebug = Vehicle.debug) {
     // formes fil de fer en blanc
     stroke(255);
     // épaisseur du trait = 2
@@ -150,7 +190,7 @@ class Vehicle {
 
     // draw velocity vector
     pop();
-    this.drawVector(this.pos, this.vel.copy().mult(10));
+    if (showDebug) this.drawVector(this.pos, this.vel.copy().mult(10));
   }
 
   drawVector(pos, v) {

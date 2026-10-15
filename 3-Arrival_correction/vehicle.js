@@ -182,7 +182,13 @@ class Vehicle {
   }
 
   flee(target) {
-    // recopier code de flee de l'exemple précédent
+    const targetPosition = target.pos || target;
+    const desiredVelocity = p5.Vector.sub(this.pos, targetPosition);
+    if (desiredVelocity.magSq() === 0) return createVector(0, 0);
+    desiredVelocity.setMag(this.maxSpeed);
+    const force = p5.Vector.sub(desiredVelocity, this.vel);
+    force.limit(this.maxForce);
+    return force;
   }
 
   seek(target, arrival = false, d=0) {
